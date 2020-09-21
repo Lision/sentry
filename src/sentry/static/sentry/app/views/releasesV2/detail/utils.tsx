@@ -75,6 +75,7 @@ type GetQueryProps = {
   perPage?: number;
   activeRepository?: Repository;
 };
+
 export function getQuery({location, perPage = 20, activeRepository}: GetQueryProps) {
   const query = {
     ...pick(location.query, [...Object.values(URL_PARAM), 'cursor']),
