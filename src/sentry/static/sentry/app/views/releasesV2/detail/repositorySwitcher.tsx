@@ -9,7 +9,7 @@ import overflowEllipsis from 'app/styles/overflowEllipsis';
 import space from 'app/styles/space';
 import {Repository} from 'app/types';
 
-const ALL_REPOSITORIES_LABEL = t('All Respositories');
+const ALL_REPOSITORIES_LABEL = t('All Repositories');
 
 type Props = {
   repositories: Array<Repository>;
