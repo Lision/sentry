@@ -74,7 +74,7 @@ class Commits extends AsyncView<Props, State> {
           {!activeRepository
             ? t('There are no commits associated with this release.')
             : t(
-                'There are no changed files associated with this release in the repository %s.',
+                'There are no commits associated with this release in the repository %s.',
                 activeRepository.name
               )}
         </EmptyState>
