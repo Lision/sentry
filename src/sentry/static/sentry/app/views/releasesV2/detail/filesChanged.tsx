@@ -63,13 +63,19 @@ class FilesChanged extends AsyncView<Props, State> {
     ];
   };
 
-  renderBody() {
+  renderContent() {
     const {fileList, fileListPageLinks} = this.state;
+    const {activeRepository} = this.props;
 
     if (!fileList.length) {
       return (
         <EmptyState>
-          {t('There are no changed files associated with this release.')}
+          {!activeRepository
+            ? t('There are no changed files associated with this release.')
+            : t(
+                'There are no changed files associated with this release in the repository %s.',
+                activeRepository.name
+              )}
         </EmptyState>
       );
     }
@@ -77,16 +83,8 @@ class FilesChanged extends AsyncView<Props, State> {
     const filesByRepository = getFilesByRepository(fileList);
     const reposToRender = getReposToRender(Object.keys(filesByRepository));
 
-    const {location, router, activeRepository, repositories} = this.props;
-
     return (
       <React.Fragment>
-        <RepositorySwitcher
-          repositories={repositories}
-          activeRepository={activeRepository}
-          location={location}
-          router={router}
-        />
         {reposToRender.map(repoName => {
           const repoData = filesByRepository[repoName];
           const files = Object.keys(repoData);
@@ -113,6 +111,21 @@ class FilesChanged extends AsyncView<Props, State> {
           );
         })}
         <Pagination pageLinks={fileListPageLinks} />
+      </React.Fragment>
+    );
+  }
+
+  renderBody() {
+    const {activeRepository, router, repositories, location} = this.props;
+    return (
+      <React.Fragment>
+        <RepositorySwitcher
+          repositories={repositories}
+          activeRepository={activeRepository}
+          location={location}
+          router={router}
+        />
+        {this.renderContent()}
       </React.Fragment>
     );
   }

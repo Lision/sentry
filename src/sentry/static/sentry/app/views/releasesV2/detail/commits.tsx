@@ -64,28 +64,28 @@ class Commits extends AsyncView<Props, State> {
     ];
   }
 
-  renderBody() {
+  renderContent() {
     const {commits, commitsPageLinks} = this.state;
+    const {activeRepository} = this.props;
 
     if (!commits.length) {
       return (
-        <EmptyState>{t('There are no commits associated with this release.')}</EmptyState>
+        <EmptyState>
+          {!activeRepository
+            ? t('There are no commits associated with this release.')
+            : t(
+                'There are no changed files associated with this release in the repository %s.',
+                activeRepository.name
+              )}
+        </EmptyState>
       );
     }
 
     const commitsByRepository = getCommitsByRepository(commits);
     const reposToRender = getReposToRender(Object.keys(commitsByRepository));
 
-    const {location, router, activeRepository, repositories} = this.props;
-
     return (
       <React.Fragment>
-        <RepositorySwitcher
-          repositories={repositories}
-          activeRepository={activeRepository}
-          location={location}
-          router={router}
-        />
         {reposToRender.map(repoName => (
           <Panel key={repoName}>
             <PanelHeader>{repoName}</PanelHeader>
@@ -97,6 +97,22 @@ class Commits extends AsyncView<Props, State> {
           </Panel>
         ))}
         <Pagination pageLinks={commitsPageLinks} />
+      </React.Fragment>
+    );
+  }
+
+  renderBody() {
+    const {location, router, activeRepository, repositories} = this.props;
+
+    return (
+      <React.Fragment>
+        <RepositorySwitcher
+          repositories={repositories}
+          activeRepository={activeRepository}
+          location={location}
+          router={router}
+        />
+        {this.renderContent()}
       </React.Fragment>
     );
   }
