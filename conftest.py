@@ -51,24 +51,17 @@ def install_sentry_plugins():
 
 
 def pytest_collection_modifyitems(config, items):
+    total_groups = int(os.environ.get("TOTAL_TEST_GROUPS", 1))
+
+    if total_groups == 1:
+        return
+
+    current_group = int(os.environ.get("TEST_GROUP"), 0)
+    grouping_strategy = os.environ.get("TEST_GROUP_STRATEGY", "file")
     keep, discard = [], []
-    if os.environ.get("RUN_SNUBA_TESTS_ONLY"):
-        # Need to deselect test cases not of class SnubaTestCase
-        from sentry.testutils import SnubaTestCase
-        import inspect
 
-        for item in items:
-            if inspect.isclass(item.cls) and not issubclass(item.cls, SnubaTestCase):
-                discard.append(item)
-            else:
-                keep.append(item)
-    else:
-        keep = items
-
-    # Split tests in different groups if necessary
+    # Split tests in different groups
     for index, item in enumerate(items):
-        total_groups = int(os.environ.get("TOTAL_TEST_GROUPS", 1))
-        grouping_strategy = os.environ.get("TEST_GROUP_STRATEGY", "file")
         # TODO(joshuarli): six 1.12.0 adds ensure_binary: six.ensure_binary(item.location[0])
         item_to_group = (
             int(md5(six.text_type(item.location[0]).encode("utf-8")).hexdigest(), 16)
@@ -80,7 +73,12 @@ def pytest_collection_modifyitems(config, items):
         config.addinivalue_line("markers", marker)
         item.add_marker(getattr(pytest.mark, marker))
 
-    # This only needs to be done there are items to be discarded
+        if group_num == current_group:
+            keep.push(item)
+        else:
+            discard.push(item)
+
+    # This only needs to be done if there are items to be de-selected
     if len(discard) > 0:
         items[:] = keep
         config.hook.pytest_deselected(items=discard)

@@ -182,11 +182,7 @@ endif
 
 test-only-snuba:
 	@echo "--> Running all tests that use snuba"
-ifndef TEST_GROUP
-	RUN_SNUBA_TESTS_ONLY=1 py.test tests/integration tests/sentry tests/acceptance
-else
-	RUN_SNUBA_TESTS_ONLY=1 py.test -m group_$(TEST_GROUP) tests/integration tests/sentry tests/acceptance
-endif
+	py.test -m snuba tests/integration tests/sentry tests/acceptance
 	@echo ""
 
 test-snuba:
