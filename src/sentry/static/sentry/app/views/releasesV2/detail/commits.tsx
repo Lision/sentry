@@ -1,35 +1,42 @@
 import React from 'react';
+import {RouteComponentProps} from 'react-router/lib/Router';
 
+import {Client} from 'app/api';
 import CommitRow from 'app/components/commitRow';
 import {t} from 'app/locale';
-import {Commit, Organization} from 'app/types';
-import {PanelHeader, Panel, PanelBody} from 'app/components/panels';
+import {Commit, Repository} from 'app/types';
 import routeTitleGen from 'app/utils/routeTitle';
 import {formatVersion} from 'app/utils/formatters';
-import withOrganization from 'app/utils/withOrganization';
+import withApi from 'app/utils/withApi';
 import {Main} from 'app/components/layouts/thirds';
 import Pagination from 'app/components/pagination';
+import AsyncView from 'app/views/asyncView';
+import {PanelHeader, Panel, PanelBody} from 'app/components/panels';
 
-import {getCommitsByRepository} from './utils';
-import Repositories from './repositories';
-import {ReleaseContext} from './';
+import {getCommitsByRepository, getQuery, getReposToRender} from './utils';
+import withRepositories from './withRepositories';
+import RepositorySwitcher from './repositorySwitcher';
+import ReleaseEmptyState from './releaseEmptyState';
 
-type Props = {
-  organization: Organization;
-} & Repositories['props'];
+type Props = RouteComponentProps<{orgId: string; release: string}, {}> & {
+  api: Client;
+  repositories: Array<Repository>;
+  projectSlug: string;
+  activeRepository?: Repository;
+} & AsyncView['props'];
 
 type State = {
   commits: Commit[];
-} & Repositories['state'];
+} & AsyncView['state'];
 
-class ReleaseCommits extends Repositories<Props, State> {
-  static contextType = ReleaseContext;
-
+class ReleaseCommits extends AsyncView<Props, State> {
   getTitle() {
-    const {params, organization} = this.props;
+    const {params} = this.props;
+    const {orgId} = params;
+
     return routeTitleGen(
       t('Commits - Release %s', formatVersion(params.release)),
-      organization.slug,
+      orgId,
       false
     );
   }
@@ -41,44 +48,51 @@ class ReleaseCommits extends Repositories<Props, State> {
     };
   }
 
-  getEndpoints = (): ReturnType<Repositories['getEndpoints']> => {
-    const {params} = this.props;
+  getEndpoints(): ReturnType<AsyncView['getEndpoints']> {
+    const {params, projectSlug, activeRepository, location} = this.props;
     const {orgId, release} = params;
-    const {project} = this.context;
-    const query = this.getQuery();
+    const query = getQuery({location, activeRepository});
 
     return [
-      ...super.getEndpoints(),
       [
         'commits',
-        `/projects/${orgId}/${project.slug}/releases/${encodeURIComponent(
+        `/projects/${orgId}/${projectSlug}/releases/${encodeURIComponent(
           release
         )}/commits/`,
         {query},
       ],
     ];
-  };
+  }
 
-  renderContent() {
+  renderBody() {
     const {commits, commitsPageLinks} = this.state;
 
     if (!commits.length) {
-      return this.renderEmptyContent(
-        t('There are no commits associated with this release.')
+      return (
+        <ReleaseEmptyState>
+          {t('There are no commits associated with this release.')}
+        </ReleaseEmptyState>
       );
     }
 
     const commitsByRepository = getCommitsByRepository(commits);
-    const reposToRender = this.getReposToRender(Object.keys(commitsByRepository));
+    const reposToRender = getReposToRender(Object.keys(commitsByRepository));
+
+    const {location, router, activeRepository, repositories} = this.props;
 
     return (
       <React.Fragment>
-        {this.renderRepoSwitcher()}
+        <RepositorySwitcher
+          repositories={repositories}
+          activeRepository={activeRepository}
+          location={location}
+          router={router}
+        />
         {reposToRender.map(repoName => (
           <Panel key={repoName}>
             <PanelHeader>{repoName}</PanelHeader>
             <PanelBody>
-              {commitsByRepository[repoName].map(commit => (
+              {commitsByRepository[repoName]?.map(commit => (
                 <CommitRow key={commit.id} commit={commit} />
               ))}
             </PanelBody>
@@ -94,4 +108,4 @@ class ReleaseCommits extends Repositories<Props, State> {
   }
 }
 
-export default withOrganization(ReleaseCommits);
+export default withApi(withRepositories(ReleaseCommits));

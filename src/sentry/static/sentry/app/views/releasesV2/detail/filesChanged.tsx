@@ -1,36 +1,43 @@
 import React from 'react';
+import {RouteComponentProps} from 'react-router/lib/Router';
 import styled from '@emotion/styled';
 
+import {Client} from 'app/api';
 import {t, tn} from 'app/locale';
-import {CommitFile, Organization} from 'app/types';
+import {CommitFile, Repository} from 'app/types';
 import routeTitleGen from 'app/utils/routeTitle';
 import {formatVersion} from 'app/utils/formatters';
-import withOrganization from 'app/utils/withOrganization';
+import withApi from 'app/utils/withApi';
 import {Main} from 'app/components/layouts/thirds';
 import Pagination from 'app/components/pagination';
-import {Panel, PanelBody, PanelHeader} from 'app/components/panels';
+import AsyncView from 'app/views/asyncView';
+import {PanelHeader, Panel, PanelBody} from 'app/components/panels';
 import FileChange from 'app/components/fileChange';
 
-import {getFilesByRepository} from './utils';
-import Repositories from './repositories';
-import {ReleaseContext} from './';
+import {getFilesByRepository, getReposToRender, getQuery} from './utils';
+import withRepositories from './withRepositories';
+import RepositorySwitcher from './repositorySwitcher';
+import ReleaseEmptyState from './releaseEmptyState';
 
-type Props = {
-  organization: Organization;
-} & Repositories['props'];
+type Props = RouteComponentProps<{orgId: string; release: string}, {}> & {
+  api: Client;
+  repositories: Array<Repository>;
+  projectSlug: string;
+  activeRepository?: Repository;
+} & AsyncView['props'];
 
 type State = {
   fileList: CommitFile[];
-} & Repositories['state'];
+} & AsyncView['state'];
 
-class FilesChanged extends Repositories<Props, State> {
-  static contextType = ReleaseContext;
-
+class FilesChanged extends AsyncView<Props, State> {
   getTitle() {
-    const {params, organization} = this.props;
+    const {params} = this.props;
+    const {orgId} = params;
+
     return routeTitleGen(
       t('Files Changed - Release %s', formatVersion(params.release)),
-      organization.slug,
+      orgId,
       false
     );
   }
@@ -41,13 +48,13 @@ class FilesChanged extends Repositories<Props, State> {
       fileList: [],
     };
   }
-  getEndpoints = (): ReturnType<Repositories['getEndpoints']> => {
-    const {params} = this.props;
+
+  getEndpoints = (): ReturnType<AsyncView['getEndpoints']> => {
+    const {params, activeRepository, location} = this.props;
     const {orgId, release} = params;
-    const query = this.getQuery();
+    const query = getQuery({location, activeRepository});
 
     return [
-      ...super.getEndpoints(),
       [
         'fileList',
         `/organizations/${orgId}/releases/${encodeURIComponent(release)}/commitfiles/`,
@@ -56,19 +63,30 @@ class FilesChanged extends Repositories<Props, State> {
     ];
   };
 
-  renderContent() {
+  renderBody() {
     const {fileList, fileListPageLinks} = this.state;
 
     if (!fileList.length) {
-      return this.renderEmptyContent(t('There are no changed files.'));
+      return (
+        <ReleaseEmptyState>
+          {t('There are no commits associated with this release.')}
+        </ReleaseEmptyState>
+      );
     }
 
     const filesByRepository = getFilesByRepository(fileList);
-    const reposToRender = this.getReposToRender(Object.keys(filesByRepository));
+    const reposToRender = getReposToRender(Object.keys(filesByRepository));
+
+    const {location, router, activeRepository, repositories} = this.props;
 
     return (
       <React.Fragment>
-        {this.renderRepoSwitcher()}
+        <RepositorySwitcher
+          repositories={repositories}
+          activeRepository={activeRepository}
+          location={location}
+          router={router}
+        />
         {reposToRender.map(repoName => {
           const repoData = filesByRepository[repoName];
           const files = Object.keys(repoData);
@@ -104,7 +122,7 @@ class FilesChanged extends Repositories<Props, State> {
   }
 }
 
-export default withOrganization(FilesChanged);
+export default withApi(withRepositories(FilesChanged));
 
 const StyledFileChange = styled(FileChange)`
   border-radius: 0;
