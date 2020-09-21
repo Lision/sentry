@@ -74,9 +74,9 @@ def pytest_collection_modifyitems(config, items):
         item.add_marker(getattr(pytest.mark, marker))
 
         if group_num == current_group:
-            keep.push(item)
+            keep.append(item)
         else:
-            discard.push(item)
+            discard.append(item)
 
     # This only needs to be done if there are items to be de-selected
     if len(discard) > 0:
