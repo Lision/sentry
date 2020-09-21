@@ -19,7 +19,7 @@ import ButtonBar from 'app/components/buttonBar';
 import {stringifyQueryObject, QueryResults} from 'app/utils/tokenizeSearch';
 
 import {getReleaseEventView} from './chart/utils';
-import ReleaseEmptyState from '../releaseEmptyState';
+import EmptyState from '../emptyState';
 
 enum IssuesType {
   NEW = 'new',
@@ -145,7 +145,7 @@ class Issues extends React.Component<Props, State> {
       : t('given timeframe');
 
     return (
-      <ReleaseEmptyState withIcon={false}>
+      <EmptyState withIcon={false}>
         <React.Fragment>
           {issuesType === IssuesType.NEW &&
             tct('No new issues in this release for the [timePeriod].', {
@@ -161,7 +161,7 @@ class Issues extends React.Component<Props, State> {
               timePeriod: displayedPeriod,
             })}
         </React.Fragment>
-      </ReleaseEmptyState>
+      </EmptyState>
     );
   };
 

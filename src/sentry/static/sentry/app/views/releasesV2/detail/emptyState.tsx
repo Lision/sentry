@@ -7,7 +7,7 @@ type Props = Pick<React.ComponentProps<typeof EmptyStateWarning>, 'withIcon'> & 
   children: React.ReactNode;
 };
 
-const ReleaseEmptyState = ({withIcon, children}: Props) => (
+const EmptyState = ({withIcon, children}: Props) => (
   <Panel>
     <PanelBody>
       <EmptyStateWarning small withIcon={withIcon}>
@@ -17,4 +17,4 @@ const ReleaseEmptyState = ({withIcon, children}: Props) => (
   </Panel>
 );
 
-export default ReleaseEmptyState;
+export default EmptyState;

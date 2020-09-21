@@ -16,7 +16,7 @@ import {PanelHeader, Panel, PanelBody} from 'app/components/panels';
 import {getCommitsByRepository, getQuery, getReposToRender} from './utils';
 import withRepositories from './withRepositories';
 import RepositorySwitcher from './repositorySwitcher';
-import ReleaseEmptyState from './releaseEmptyState';
+import EmptyState from './emptyState';
 
 type Props = RouteComponentProps<{orgId: string; release: string}, {}> & {
   api: Client;
@@ -29,7 +29,7 @@ type State = {
   commits: Commit[];
 } & AsyncView['state'];
 
-class ReleaseCommits extends AsyncView<Props, State> {
+class Commits extends AsyncView<Props, State> {
   getTitle() {
     const {params} = this.props;
     const {orgId} = params;
@@ -69,9 +69,7 @@ class ReleaseCommits extends AsyncView<Props, State> {
 
     if (!commits.length) {
       return (
-        <ReleaseEmptyState>
-          {t('There are no commits associated with this release.')}
-        </ReleaseEmptyState>
+        <EmptyState>{t('There are no commits associated with this release.')}</EmptyState>
       );
     }
 
@@ -108,4 +106,4 @@ class ReleaseCommits extends AsyncView<Props, State> {
   }
 }
 
-export default withApi(withRepositories(ReleaseCommits));
+export default withApi(withRepositories(Commits));

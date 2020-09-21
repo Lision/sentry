@@ -17,7 +17,7 @@ import FileChange from 'app/components/fileChange';
 import {getFilesByRepository, getReposToRender, getQuery} from './utils';
 import withRepositories from './withRepositories';
 import RepositorySwitcher from './repositorySwitcher';
-import ReleaseEmptyState from './releaseEmptyState';
+import EmptyState from './emptyState';
 
 type Props = RouteComponentProps<{orgId: string; release: string}, {}> & {
   api: Client;
@@ -68,9 +68,9 @@ class FilesChanged extends AsyncView<Props, State> {
 
     if (!fileList.length) {
       return (
-        <ReleaseEmptyState>
-          {t('There are no commits associated with this release.')}
-        </ReleaseEmptyState>
+        <EmptyState>
+          {t('There are no changed files associated with this release.')}
+        </EmptyState>
       );
     }
 
