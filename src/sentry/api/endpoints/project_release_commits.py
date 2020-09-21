@@ -40,7 +40,6 @@ class ProjectReleaseCommitsEndpoint(ProjectEndpoint):
 
         queryset = ReleaseCommit.objects.filter(release=release).select_related(
             "commit", "commit__author"
-
         )
 
         repo_name = request.query_params.get("repo_name")
